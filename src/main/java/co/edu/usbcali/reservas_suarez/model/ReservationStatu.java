@@ -4,12 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "reservation_status")
+@Table(name = "reservation_statu")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ReservationStatus {
+public class ReservationStatu {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

@@ -2,7 +2,6 @@ package co.edu.usbcali.reservas_suarez.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Entity
@@ -27,7 +26,7 @@ public class Reservation {
 
     @ManyToOne
     @JoinColumn(name = "status_id", nullable = false, referencedColumnName = "id")
-    private ReservationStatus status;
+    private ReservationStatu status;
 
     @Column(name = "start_datetime", nullable = false)
     private LocalDateTime startDatetime;
