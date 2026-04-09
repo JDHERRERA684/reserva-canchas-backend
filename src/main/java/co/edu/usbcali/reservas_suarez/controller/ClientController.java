@@ -1,16 +1,15 @@
 package co.edu.usbcali.reservas_suarez.controller;
 
+import co.edu.usbcali.reservas_suarez.dto.request.CreateClientRequest;
 import co.edu.usbcali.reservas_suarez.dto.response.GetClientResponse;
 import co.edu.usbcali.reservas_suarez.mapper.ClientMapper;
 import co.edu.usbcali.reservas_suarez.model.Client;
 import co.edu.usbcali.reservas_suarez.repository.ClientRepository;
+import co.edu.usbcali.reservas_suarez.service.ClientService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -23,6 +22,7 @@ import java.util.List;
 public class ClientController {
     //Inyeccion de dependencias
     private final ClientRepository clientRepository;
+    private final ClientService clientService;
 
     @GetMapping("/ping")
     public String ping (){
@@ -53,4 +53,14 @@ public class ClientController {
             HttpStatus.OK
         );
     }
+    @PostMapping("/create")
+    public ResponseEntity<GetClientResponse> createClient(@RequestBody CreateClientRequest createClientRequest)throws Exception{
+       GetClientResponse clientCreated = clientService.createClient(createClientRequest);
+       return new ResponseEntity<>(
+               clientCreated,
+               HttpStatus.CREATED
+       );
+    }
+
 }
+

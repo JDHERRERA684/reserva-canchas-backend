@@ -1,4 +1,5 @@
 package co.edu.usbcali.reservas_suarez.mapper;
+import co.edu.usbcali.reservas_suarez.dto.request.CreateClientRequest;
 import co.edu.usbcali.reservas_suarez.dto.response.GetClientResponse;
 import co.edu.usbcali.reservas_suarez.model.Client;
 
@@ -15,6 +16,7 @@ public class ClientMapper {
                 .id(client.getId())
                 .name(client.getName())
                 .phone(client.getPhone())
+                .createdAt(client.getCreatedAt())
                 .build();
 
         return getClientResponse;
@@ -38,5 +40,12 @@ public class ClientMapper {
         //Retornar la lista de DTO GetClientResponse
         return getClientResponseList;*/
         return clients.stream().map(ClientMapper::entityToGetClientResponse).toList();
+    }
+
+    public static Client createClientRequestToEntity(CreateClientRequest createClientRequest){
+        return Client.builder()
+                .name(createClientRequest.getName())
+                .phone(createClientRequest.getPhone())
+                .build();
     }
 }
