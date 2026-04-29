@@ -12,6 +12,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -24,10 +25,9 @@ public class ReservationServiceImpl implements ReservationService {
     private final CourtRepository courtRepository;
     private final ReservationStatusRepository reservationStatusRepository;
 
+    // CREATE
     @Override
     public GetReservationResponse createReservation(CreateReservationRequest createReservationRequest) throws Exception {
-
-        try {
 
             if (Objects.isNull(createReservationRequest)) {
                 throw new Exception("El objeto CreateReservationRequest no puede ser nulo");
@@ -68,7 +68,7 @@ public class ReservationServiceImpl implements ReservationService {
                     .orElseThrow(() -> new Exception("Cancha no encontrada"+
                             createReservationRequest.getCourtId()));
 
-            ReservationStatu status = reservationStatusRepository.findById(createReservationRequest.getStatusId())
+            ReservationStatus status = reservationStatusRepository.findById(createReservationRequest.getStatusId())
                     .orElseThrow(() -> new Exception("Estado no encontrado" + createReservationRequest.getStatusId()));
 
             // Covertir a Entity Reservation
@@ -93,8 +93,67 @@ public class ReservationServiceImpl implements ReservationService {
             // Mapear la entidad a DTO y retormar
             return ReservationMapper.entityToGetReservationResponse(reservation);
 
-        } catch (Exception e) {
-            throw e;
+    }
+
+        // GET ALL
+        @Override
+        public List<GetReservationResponse> getAllReservations() {
+            List<Reservation> reservations = reservationRepository.findAll();
+            List<GetReservationResponse> getReservationResponseList = ReservationMapper.entityToListGetReservationResponse(reservations);
+            return getReservationResponseList;
+    }
+
+        //  GET BY ID
+        @Override
+        public GetReservationResponse getReservationById(Integer id) {
+
+            Reservation reservation = reservationRepository.findById(id)
+                    .orElseThrow(() ->
+                            new RuntimeException("Reserva no encontrada con id: " + id));
+            GetReservationResponse getReservationResponse = ReservationMapper.entityToGetReservationResponse(reservation);
+            return  getReservationResponse;
         }
+
+    // CANCEL (PUT)
+    @Override
+    public GetReservationResponse cancelReservation(Integer id) {
+
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Reserva no encontrada con id: " + id)
+                );
+
+        ReservationStatus cancelled = reservationStatusRepository.findById(2)
+                .orElseThrow(() ->
+                        new RuntimeException("Estado CANCELLED no encontrado")
+                );
+
+        reservation.setStatus(cancelled);
+
+        reservation = reservationRepository.save(reservation);
+
+        return ReservationMapper.entityToGetReservationResponse(reservation);
+    }
+
+    // UPDATE (PUT)
+    @Override
+    public GetReservationResponse updateReservation(Integer id, CreateReservationRequest request) throws Exception {
+
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Reserva no encontrada con id: " + id)
+                );
+
+        reservation.setStartDatetime(request.getStartDatetime());
+        reservation.setEndDatetime(request.getEndDatetime());
+        reservation.setNotes(request.getNotes());
+
+        try {
+            reservation = reservationRepository.save(reservation);
+        } catch (DataIntegrityViolationException e) {
+            throw new Exception("La cancha ya está reservada en ese horario");
+        }
+
+        return ReservationMapper.entityToGetReservationResponse(reservation);
     }
 }

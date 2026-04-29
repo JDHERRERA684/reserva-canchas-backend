@@ -4,7 +4,6 @@ import co.edu.usbcali.reservas_suarez.dto.request.CreateClientRequest;
 import co.edu.usbcali.reservas_suarez.dto.response.GetClientResponse;
 import co.edu.usbcali.reservas_suarez.mapper.ClientMapper;
 import co.edu.usbcali.reservas_suarez.model.Client;
-import co.edu.usbcali.reservas_suarez.repository.ClientRepository;
 import co.edu.usbcali.reservas_suarez.service.ClientService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,7 +20,7 @@ import java.util.List;
 
 public class ClientController {
     //Inyeccion de dependencias
-    private final ClientRepository clientRepository;
+
     private final ClientService clientService;
 
     @GetMapping("/ping")
@@ -33,26 +32,19 @@ public class ClientController {
     public List<GetClientResponse> getAllClients() {
         //Declarar nueva lista de clientResponse
         List<GetClientResponse> clientsResponse;
-
-        //Ir al Repository y obtener todos los usuarios
-        List<Client> clients =clientRepository.findAll();
-
-        //Convertir la lista de clientes a lista clientResponse
-        clientsResponse= ClientMapper.entityToListGetClientResponse(clients);
-        return clientsResponse;
+        return clientService.getAllClients();
 
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<GetClientResponse> getClientById(@PathVariable Integer id){
-    Client client= clientRepository.getReferenceById(id);
-    GetClientResponse clientResponse = ClientMapper.entityToGetClientResponse(client);
-
+        GetClientResponse clientResponse = clientService.getClientById(id);
         return new ResponseEntity<> (
-                clientResponse,
+            clientResponse,
             HttpStatus.OK
         );
     }
+
     @PostMapping("/create")
     public ResponseEntity<GetClientResponse> createClient(@RequestBody CreateClientRequest createClientRequest)throws Exception{
        GetClientResponse clientCreated = clientService.createClient(createClientRequest);
@@ -61,6 +53,24 @@ public class ClientController {
                HttpStatus.CREATED
        );
     }
+    @PutMapping("/update/{id}")
+    public ResponseEntity<GetClientResponse> updateClient(@PathVariable Integer id,
+            @RequestBody CreateClientRequest clientRequest) throws Exception {
+        GetClientResponse clientUpdated = clientService.updateClient(id, clientRequest);
 
+        return new ResponseEntity<>(
+                clientUpdated,
+                HttpStatus.OK);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteClient(@PathVariable Integer id){
+        clientService.deleteClient(id);
+        return new ResponseEntity<>(
+                "Cliente eliminado",
+                HttpStatus.OK);
+    }
 }
+
+
 

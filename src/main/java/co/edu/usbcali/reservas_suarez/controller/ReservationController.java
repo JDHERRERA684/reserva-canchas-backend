@@ -4,7 +4,6 @@ import co.edu.usbcali.reservas_suarez.dto.request.CreateReservationRequest;
 import co.edu.usbcali.reservas_suarez.dto.response.GetReservationResponse;
 import co.edu.usbcali.reservas_suarez.mapper.ReservationMapper;
 import co.edu.usbcali.reservas_suarez.model.Reservation;
-import co.edu.usbcali.reservas_suarez.repository.ReservationRepository;
 import co.edu.usbcali.reservas_suarez.service.ReservationService;
 
 import lombok.AllArgsConstructor;
@@ -21,7 +20,7 @@ import java.util.List;
 public class ReservationController {
 
     // Inyección de dependencias
-    private final ReservationRepository reservationRepository;
+
     private final ReservationService reservationService;
 
 
@@ -33,18 +32,7 @@ public class ReservationController {
 
     @GetMapping("/all")
     public List<GetReservationResponse> getAllReservations() {
-
-        // Declarar lista response
-        List<GetReservationResponse> reservationsResponse;
-
-        // Obtener todas las reservas
-        List<Reservation> reservations = reservationRepository.findAll();
-
-        // Convertir a response
-        reservationsResponse =
-                ReservationMapper.entityToListGetReservationResponse(reservations);
-
-        return reservationsResponse;
+        return reservationService.getAllReservations();
     }
 
 
@@ -52,10 +40,8 @@ public class ReservationController {
     public ResponseEntity<GetReservationResponse> getReservationById(
             @PathVariable Integer id){
 
-        Reservation reservation = reservationRepository.getReferenceById(id);
-
         GetReservationResponse reservationResponse =
-                ReservationMapper.entityToGetReservationResponse(reservation);
+                reservationService.getReservationById(id);
 
         return new ResponseEntity<>(
                 reservationResponse,
@@ -75,6 +61,33 @@ public class ReservationController {
         return new ResponseEntity<>(
                 reservationCreated,
                 HttpStatus.CREATED
+        );
+    }
+
+    //En mi caso se maneja por states donde 2 es cancel
+    @PutMapping("/cancel/{id}")
+    public ResponseEntity<GetReservationResponse> cancelReservation(@PathVariable Integer id) {
+
+        GetReservationResponse reservationUpdated =
+                reservationService.cancelReservation(id);
+
+        return new ResponseEntity<>(
+                reservationUpdated,
+                HttpStatus.OK
+        );
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<GetReservationResponse> updateReservation( @PathVariable Integer id,
+            @RequestBody CreateReservationRequest createReservationRequest
+    ) throws Exception {
+
+        GetReservationResponse reservationUpdated =
+                reservationService.updateReservation(id, createReservationRequest);
+
+        return new ResponseEntity<>(
+                reservationUpdated,
+                HttpStatus.OK
         );
     }
 

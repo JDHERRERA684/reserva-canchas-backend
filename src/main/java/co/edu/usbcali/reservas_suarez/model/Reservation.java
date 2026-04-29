@@ -26,7 +26,7 @@ public class Reservation {
 
     @ManyToOne
     @JoinColumn(name = "status_id", nullable = false, referencedColumnName = "id")
-    private ReservationStatu status;
+    private ReservationStatus status;
 
     @Column(name = "start_datetime", nullable = false)
     private LocalDateTime startDatetime;
