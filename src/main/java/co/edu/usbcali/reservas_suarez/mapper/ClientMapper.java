@@ -1,16 +1,62 @@
 package co.edu.usbcali.reservas_suarez.mapper;
 import co.edu.usbcali.reservas_suarez.dto.request.CreateClientRequest;
 import co.edu.usbcali.reservas_suarez.dto.response.GetClientResponse;
+import co.edu.usbcali.reservas_suarez.dto.response.UpdateClientResponse;
 import co.edu.usbcali.reservas_suarez.model.Client;
 
-import java.util.ArrayList;
+
 import java.util.List;
 
 
-
-
 public class ClientMapper {
-    public static GetClientResponse entityToGetClientResponse(Client client){
+
+    public static Client createClientRequestToEntity(CreateClientRequest createClientRequest){
+        return Client.builder()
+                .name(createClientRequest.getName())
+                .phone(createClientRequest.getPhone())
+                .build();
+    }
+
+    public static GetClientResponse entityToGetClientResponse(
+            Client client
+    ) {
+
+        return GetClientResponse.builder()
+                .id(client.getId())
+                .name(client.getName())
+                .phone(client.getPhone())
+                .createdAt(client.getCreatedAt())
+                .build();
+    }
+    public static UpdateClientResponse entityToUpdateClientResponse(
+            Client client
+    ) {
+
+        return new UpdateClientResponse(
+                client.getId(),
+                client.getName(),
+                client.getPhone()
+        );
+    }
+
+    public static List<GetClientResponse> entityToListGetClientResponse(
+            List<Client> clients
+    ) {
+
+        return clients.stream()
+                .map(ClientMapper::entityToGetClientResponse)
+                .toList();
+    }
+}
+
+
+
+
+
+
+
+
+/* public static GetClientResponse entityToGetClientResponse(Client client){
         //Instanciar nuevo objeto GetUserResponse
         GetClientResponse getClientResponse = GetClientResponse.builder()
                 .id(client.getId())
@@ -20,9 +66,9 @@ public class ClientMapper {
                 .build();
 
         return getClientResponse;
-    }
+    } */
 
-    public static List<GetClientResponse> entityToListGetClientResponse(List<Client> clients){
+    /*  public static List<GetClientResponse> entityToListGetClientResponse(List<Client> clients){
         /* //Instaciar lista de DTO GetClientResponse vacia inicialmente
         List<GetClientResponse> getClientResponseList = new ArrayList<>();
 
@@ -38,14 +84,6 @@ public class ClientMapper {
         }
 
         //Retornar la lista de DTO GetClientResponse
-        return getClientResponseList;*/
+        return getClientResponseList;
         return clients.stream().map(ClientMapper::entityToGetClientResponse).toList();
-    }
-
-    public static Client createClientRequestToEntity(CreateClientRequest createClientRequest){
-        return Client.builder()
-                .name(createClientRequest.getName())
-                .phone(createClientRequest.getPhone())
-                .build();
-    }
-}
+    } */

@@ -1,7 +1,10 @@
 package co.edu.usbcali.reservas_suarez.controller;
 
 import co.edu.usbcali.reservas_suarez.dto.request.CreateReservationRequest;
+import co.edu.usbcali.reservas_suarez.dto.request.UpdateReservationRequest;
+import co.edu.usbcali.reservas_suarez.dto.response.CreateReservationResponse;
 import co.edu.usbcali.reservas_suarez.dto.response.GetReservationResponse;
+import co.edu.usbcali.reservas_suarez.dto.response.UpdateReservationResponse;
 import co.edu.usbcali.reservas_suarez.mapper.ReservationMapper;
 import co.edu.usbcali.reservas_suarez.model.Reservation;
 import co.edu.usbcali.reservas_suarez.service.ReservationService;
@@ -51,11 +54,11 @@ public class ReservationController {
 
 
     @PostMapping("/create")
-    public ResponseEntity<GetReservationResponse> createReservation(
+    public ResponseEntity<CreateReservationResponse> createReservation(
             @RequestBody CreateReservationRequest createReservationRequest
     ) throws Exception {
 
-        GetReservationResponse reservationCreated =
+        CreateReservationResponse reservationCreated =
                 reservationService.createReservation(createReservationRequest);
 
         return new ResponseEntity<>(
@@ -78,15 +81,24 @@ public class ReservationController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<GetReservationResponse> updateReservation( @PathVariable Integer id,
-            @RequestBody CreateReservationRequest createReservationRequest
-    ) throws Exception {
+    public ResponseEntity<UpdateReservationResponse> updateReservation(@PathVariable Integer id,
+                @RequestBody UpdateReservationRequest updateReservationRequest) throws Exception {
 
-        GetReservationResponse reservationUpdated =
-                reservationService.updateReservation(id, createReservationRequest);
+        UpdateReservationResponse reservationUpdated =
+                reservationService.updateReservation(id, updateReservationRequest);
 
         return new ResponseEntity<>(
                 reservationUpdated,
+                HttpStatus.OK
+        );
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteReservation(@PathVariable Integer id) {
+        reservationService.deleteReservation(id);
+
+        return new ResponseEntity<>(
+                "Reserva eliminada correctamente",
                 HttpStatus.OK
         );
     }

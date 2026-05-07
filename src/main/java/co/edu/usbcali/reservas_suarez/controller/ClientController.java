@@ -1,7 +1,9 @@
 package co.edu.usbcali.reservas_suarez.controller;
 
 import co.edu.usbcali.reservas_suarez.dto.request.CreateClientRequest;
+import co.edu.usbcali.reservas_suarez.dto.request.UpdateClientRequest;
 import co.edu.usbcali.reservas_suarez.dto.response.GetClientResponse;
+import co.edu.usbcali.reservas_suarez.dto.response.UpdateClientResponse;
 import co.edu.usbcali.reservas_suarez.mapper.ClientMapper;
 import co.edu.usbcali.reservas_suarez.model.Client;
 import co.edu.usbcali.reservas_suarez.service.ClientService;
@@ -31,7 +33,7 @@ public class ClientController {
     @GetMapping("/all")
     public List<GetClientResponse> getAllClients() {
         //Declarar nueva lista de clientResponse
-        List<GetClientResponse> clientsResponse;
+        //List<GetClientResponse> clientsResponse;
         return clientService.getAllClients();
 
     }
@@ -54,9 +56,9 @@ public class ClientController {
        );
     }
     @PutMapping("/update/{id}")
-    public ResponseEntity<GetClientResponse> updateClient(@PathVariable Integer id,
-            @RequestBody CreateClientRequest clientRequest) throws Exception {
-        GetClientResponse clientUpdated = clientService.updateClient(id, clientRequest);
+    public ResponseEntity<UpdateClientResponse> updateClient(@PathVariable Integer id,
+            @RequestBody UpdateClientRequest updateClientRequest) throws Exception {
+        UpdateClientResponse clientUpdated = clientService.updateClient(id, updateClientRequest);
 
         return new ResponseEntity<>(
                 clientUpdated,

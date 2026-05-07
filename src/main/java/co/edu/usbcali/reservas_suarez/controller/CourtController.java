@@ -1,5 +1,11 @@
 package co.edu.usbcali.reservas_suarez.controller;
 import co.edu.usbcali.reservas_suarez.model.Court;
+
+import co.edu.usbcali.reservas_suarez.dto.request.CreateCourtRequest;
+import co.edu.usbcali.reservas_suarez.dto.request.UpdateCourtRequest;
+import co.edu.usbcali.reservas_suarez.dto.response.CreateCourtResponse;
+import co.edu.usbcali.reservas_suarez.dto.response.GetCourtResponse;
+import co.edu.usbcali.reservas_suarez.dto.response.UpdateCourtResponse;
 import co.edu.usbcali.reservas_suarez.service.CourtService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,35 +28,34 @@ public class CourtController {
     }
 
     @GetMapping("/all")
-    public List<Court> getAllCourts() {
+    public List<GetCourtResponse> getAllCourts() {
         return courtService.getAllCourts();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Court> getCourtById(@PathVariable Integer id){
-        Court court = courtService.getCourtById(id);
+    public ResponseEntity<GetCourtResponse> getCourtById(@PathVariable Integer id){
+        GetCourtResponse courtResponse = courtService.getCourtById(id);
         return new ResponseEntity<>(
-                court,
+                courtResponse,
                 HttpStatus.OK);
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Court> createCourt(@RequestBody Court court){
-        Court Created = courtService.createCourt(court);
+    public ResponseEntity<CreateCourtResponse> createCourt(@RequestBody CreateCourtRequest createCourtRequest) throws Exception {
+        CreateCourtResponse courtCreated = courtService.createCourt(createCourtRequest);
         return new ResponseEntity<>(
-                Created,
+                courtCreated,
                 HttpStatus.CREATED);
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<Court> updateCourt(
+    public ResponseEntity<UpdateCourtResponse> updateCourt(
             @PathVariable Integer id,
-            @RequestBody Court court
-    ){
+            @RequestBody UpdateCourtRequest updateCourtRequest)throws Exception{
 
-        Court Updated = courtService.updateCourt(id, court);
+        UpdateCourtResponse courtUpdated = courtService.updateCourt(id, updateCourtRequest);
         return new ResponseEntity<>(
-                Updated,
+                courtUpdated,
                 HttpStatus.OK);
     }
 

@@ -5,9 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class CreateClientRequest {
-
+public class CreateCourtRequest {
     private String name;
-    private String phone;
+    private String description;
 }
-
