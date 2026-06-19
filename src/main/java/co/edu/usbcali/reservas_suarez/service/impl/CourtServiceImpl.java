@@ -5,6 +5,7 @@ import co.edu.usbcali.reservas_suarez.dto.request.UpdateCourtRequest;
 import co.edu.usbcali.reservas_suarez.dto.response.CreateCourtResponse;
 import co.edu.usbcali.reservas_suarez.dto.response.GetCourtResponse;
 import co.edu.usbcali.reservas_suarez.dto.response.UpdateCourtResponse;
+import co.edu.usbcali.reservas_suarez.exception.ResourceNotFoundException;
 import co.edu.usbcali.reservas_suarez.mapper.CourtMapper;
 
 import co.edu.usbcali.reservas_suarez.model.Court;
@@ -35,7 +36,7 @@ public class CourtServiceImpl implements CourtService {
     public GetCourtResponse getCourtById(Integer id) {
         Court court = courtRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Cancha no encontrada con id: " + id)
+                        new ResourceNotFoundException("Cancha no encontrada con id: " + id)
                 );
         return CourtMapper.entityToGetCourtResponse(court);
     }
@@ -46,30 +47,19 @@ public class CourtServiceImpl implements CourtService {
     public CreateCourtResponse createCourt(CreateCourtRequest createCourtRequest) throws Exception {
 
         try {
-        // Validar request
-        if (Objects.isNull(createCourtRequest)) {
-            throw new RuntimeException("La cancha no puede ser nula");
-        }
-        // Validar name
-        if (Objects.isNull (createCourtRequest.getName()) || createCourtRequest.getName().isBlank()) {
-            throw new RuntimeException("El nombre de la cancha es requerido");
-        }
+            if (Objects.isNull(createCourtRequest)) {
+                throw new Exception("El objeto CreateCourtRequest no puede ser nulo");
 
-        if (createCourtRequest.getName().length() > 50) {
-            throw new RuntimeException("El nombre solo soporta hasta 50 caracteres");
-        }
+                }
 
-            // Convertir Request a Entity usando Mapper
-            Court court =
-                    CourtMapper.createCourtRequestToEntity(
-                            createCourtRequest
-                    );
+                // Convertir Request a Entity usando Mapper
+                Court court = CourtMapper.createCourtRequestToEntity(createCourtRequest);
 
-            // Persistir en base de datos
-            court = courtRepository.save(court);
+                // Persistir en base de datos
+                court = courtRepository.save(court);
 
-            // Retornar DTO Response
-            return CourtMapper.entityToCreateCourtResponse(court);
+                // Retornar DTO Response
+                return CourtMapper.entityToCreateCourtResponse(court);
 
         } catch (Exception e) {
             throw e;
@@ -91,21 +81,11 @@ public class CourtServiceImpl implements CourtService {
             }
 
             // Buscar cancha
-            Court court = courtRepository.findById(id)
-                    .orElseThrow(() ->
-                            new Exception(
-                                    "No se ha encontrado la cancha con id " + id
-                            )
-                    );
+            Court court = courtRepository.findById(id).orElseThrow(() ->
+                            new ResourceNotFoundException("No se ha encontrado la cancha con id " + id));
 
             // Actualizar name
-            if (Objects.nonNull(updateCourtRequest.getName())
-                    && !updateCourtRequest.getName().isBlank()) {
-
-                if (updateCourtRequest.getName().length() > 50) {
-                    throw new Exception("El nombre solo soporta hasta 50 caracteres");
-                }
-
+            if (Objects.nonNull(updateCourtRequest.getName())){
                 court.setName(updateCourtRequest.getName());
             }
             // Actualizar description
@@ -128,9 +108,7 @@ public class CourtServiceImpl implements CourtService {
     public void deleteCourt(Integer id) {
 
         Court court = courtRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Cancha no encontrada con id: " + id)
-                );
+                .orElseThrow(() -> new ResourceNotFoundException("Cancha no encontrada con id: " + id));
 
         courtRepository.delete(court);
     }

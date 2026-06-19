@@ -43,4 +43,7 @@ public class Reservation {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "reservation_code")
+    private String reservationCode;
+
 }

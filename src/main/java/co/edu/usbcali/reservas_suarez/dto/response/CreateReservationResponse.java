@@ -18,4 +18,5 @@ public class CreateReservationResponse {
     private LocalDateTime endDatetime;
 
     private String notes;
+    private String reservationCode;
 }

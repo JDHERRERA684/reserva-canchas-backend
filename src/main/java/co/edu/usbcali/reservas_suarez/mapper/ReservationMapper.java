@@ -2,6 +2,7 @@ package co.edu.usbcali.reservas_suarez.mapper;
 
 
 import co.edu.usbcali.reservas_suarez.dto.response.CreateReservationResponse;
+import co.edu.usbcali.reservas_suarez.dto.response.GetPublicReservationResponse;
 import co.edu.usbcali.reservas_suarez.dto.response.GetReservationResponse;
 import co.edu.usbcali.reservas_suarez.dto.response.UpdateReservationResponse;
 import co.edu.usbcali.reservas_suarez.model.Reservation;
@@ -21,6 +22,7 @@ public class ReservationMapper {
                 .startDatetime(reservation.getStartDatetime())
                 .endDatetime(reservation.getEndDatetime())
                 .notes(reservation.getNotes())
+                .reservationCode(reservation.getReservationCode())
                 .build();
     }
 
@@ -34,7 +36,8 @@ public class ReservationMapper {
                 Objects.nonNull(reservation.getStatus()) ? reservation.getStatus().getName() : null,
                 reservation.getStartDatetime(),
                 reservation.getEndDatetime(),
-                reservation.getNotes()
+                reservation.getNotes(),
+                reservation.getReservationCode()
         );
     }
 
@@ -61,6 +64,7 @@ public class ReservationMapper {
              .notes(reservation.getNotes())
 
              .createdAt(reservation.getCreatedAt())
+             .reservationCode(reservation.getReservationCode())
              .build();
  }
 
@@ -69,5 +73,39 @@ public class ReservationMapper {
                 .stream()
                 .map(ReservationMapper::entityToGetReservationResponse)
                 .toList();
+
+}
+public static GetPublicReservationResponse entityToGetPublicReservationResponse(Reservation reservation) {
+
+    return GetPublicReservationResponse.builder()
+
+            .id(reservation.getId())
+
+            .courtId(Objects.nonNull(reservation.getCourt()) ? reservation.getCourt().getId() : null)
+            .courtName(Objects.nonNull(reservation.getCourt()) ? reservation.getCourt().getName() : null)
+
+            .statusId(Objects.nonNull(reservation.getStatus()) ? reservation.getStatus().getId() : null)
+            .statusName(Objects.nonNull(reservation.getStatus()) ? reservation.getStatus().getName() : null)
+
+            .startDatetime(reservation.getStartDatetime())
+            .endDatetime(reservation.getEndDatetime())
+
+            .reservationCode(reservation.getReservationCode())
+
+            .build();
+}
+    public static List<GetPublicReservationResponse> entityToListGetPublicReservationResponse(
+            List<Reservation> reservations
+    ) {
+
+        return reservations
+                .stream()
+                .map(ReservationMapper::entityToGetPublicReservationResponse)
+                .toList();
     }
 }
+
+
+
+
+

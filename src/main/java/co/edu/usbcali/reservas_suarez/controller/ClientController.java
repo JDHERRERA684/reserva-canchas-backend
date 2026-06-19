@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -25,10 +26,10 @@ public class ClientController {
 
     private final ClientService clientService;
 
-    @GetMapping("/ping")
-    public String ping (){
-        return "pong";
-    }
+    // @GetMapping("/ping")
+    // public String ping (){
+    //    return "pong";
+    //}
 
     @GetMapping("/all")
     public List<GetClientResponse> getAllClients() {
@@ -48,16 +49,20 @@ public class ClientController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<GetClientResponse> createClient(@RequestBody CreateClientRequest createClientRequest)throws Exception{
-       GetClientResponse clientCreated = clientService.createClient(createClientRequest);
-       return new ResponseEntity<>(
-               clientCreated,
-               HttpStatus.CREATED
-       );
+    public ResponseEntity<GetClientResponse> createClient(@Valid @RequestBody CreateClientRequest createClientRequest
+    ) throws Exception {
+
+        GetClientResponse clientCreated =
+                clientService.createClient(createClientRequest);
+
+        return new ResponseEntity<>(
+                clientCreated,
+                HttpStatus.CREATED
+        );
     }
     @PutMapping("/update/{id}")
     public ResponseEntity<UpdateClientResponse> updateClient(@PathVariable Integer id,
-            @RequestBody UpdateClientRequest updateClientRequest) throws Exception {
+            @Valid @RequestBody UpdateClientRequest updateClientRequest) throws Exception {
         UpdateClientResponse clientUpdated = clientService.updateClient(id, updateClientRequest);
 
         return new ResponseEntity<>(

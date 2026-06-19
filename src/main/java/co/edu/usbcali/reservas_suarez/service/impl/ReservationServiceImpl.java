@@ -1,10 +1,15 @@
 package co.edu.usbcali.reservas_suarez.service.impl;
 
+import co.edu.usbcali.reservas_suarez.dto.request.CancelReservationRequest;
 import co.edu.usbcali.reservas_suarez.dto.request.CreateReservationRequest;
-import co.edu.usbcali.reservas_suarez.dto.request.UpdateReservationRequest;
+import co.edu.usbcali.reservas_suarez.dto.request.UpdateReservationAdminRequest;
+import co.edu.usbcali.reservas_suarez.dto.request.UpdateReservationClientRequest;
 import co.edu.usbcali.reservas_suarez.dto.response.CreateReservationResponse;
+import co.edu.usbcali.reservas_suarez.dto.response.GetPublicReservationResponse;
 import co.edu.usbcali.reservas_suarez.dto.response.GetReservationResponse;
 import co.edu.usbcali.reservas_suarez.dto.response.UpdateReservationResponse;
+import co.edu.usbcali.reservas_suarez.exception.ConflictException;
+import co.edu.usbcali.reservas_suarez.exception.ResourceNotFoundException;
 import co.edu.usbcali.reservas_suarez.mapper.ReservationMapper;
 import co.edu.usbcali.reservas_suarez.model.*;
 import co.edu.usbcali.reservas_suarez.repository.*;
@@ -35,44 +40,28 @@ public class ReservationServiceImpl implements ReservationService {
             if (Objects.isNull(createReservationRequest)) {
                 throw new Exception("El objeto CreateReservationRequest no puede ser nulo");
             }
-
-            if (Objects.isNull(createReservationRequest.getClientId()) || createReservationRequest.getClientId() <= 0)  {
-                throw new Exception("El clientId es requerido");
-            }
-
-            if (Objects.isNull(createReservationRequest.getCourtId())|| createReservationRequest.getCourtId() <= 0) {
-                throw new Exception("El courtId es requerido");
-            }
-
-            if (Objects.isNull(createReservationRequest.getStatusId())|| createReservationRequest.getStatusId() <= 0) {
-                throw new Exception("El statusId es requerido");
-            }
-
-            if (Objects.isNull(createReservationRequest.getStartDatetime()) ||
-                    Objects.isNull(createReservationRequest.getEndDatetime())) {
-                throw new Exception("Las fechas son obligatorias");
-            }
-
             if (createReservationRequest.getStartDatetime().isAfter(createReservationRequest.getEndDatetime())) {
-                throw new Exception("La fecha de inicio no puede ser mayor a la final");
+                throw new RuntimeException("La fecha de inicio no puede ser mayor a la final");
             }
 
-            if (Objects.isNull(createReservationRequest.getCreatedBy()) ||
-                    createReservationRequest.getCreatedBy().isBlank()) {
-                throw new Exception("El campo createdBy es requerido");
-            }
+            // Buscar cliente por telefono sino lo crea
+            Client client = clientRepository.findByPhone(createReservationRequest.getClientPhone())
+                    .orElseGet(() -> {  Client newClient = Client.builder()
+                            .name(createReservationRequest.getClientName())
+                            .phone(createReservationRequest.getClientPhone())
+                            .build();
 
-            // Buscar entidad
-            Client client = clientRepository.findById(createReservationRequest.getClientId())
-                    .orElseThrow(() -> new Exception("Cliente no encontrado"+
-                            createReservationRequest.getClientId()));
+            return clientRepository
+                    .save(newClient);
+        });
 
-            Court court = courtRepository.findById(createReservationRequest.getCourtId())
-                    .orElseThrow(() -> new Exception("Cancha no encontrada"+
+        //Buscar cancha
+        Court court = courtRepository.findById(createReservationRequest.getCourtId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Cancha no encontrada"+
                             createReservationRequest.getCourtId()));
-
+        //Buscar status
             ReservationStatus status = reservationStatusRepository.findById(createReservationRequest.getStatusId())
-                    .orElseThrow(() -> new Exception("Estado no encontrado" + createReservationRequest.getStatusId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado" + createReservationRequest.getStatusId()));
 
             // Covertir a Entity Reservation
             Reservation reservation = Reservation.builder()
@@ -81,19 +70,33 @@ public class ReservationServiceImpl implements ReservationService {
                     .status(status)
                     .startDatetime(createReservationRequest.getStartDatetime())
                     .endDatetime(createReservationRequest.getEndDatetime())
-                    .createdBy(createReservationRequest.getCreatedBy())
+                    .createdBy("CLIENT")
                     .notes(createReservationRequest.getNotes())
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            // Guardar en base de datos
+        // Geneera reservation code
+
+        String reservationCode =
+                java.util.UUID
+                        .randomUUID()
+                        .toString()
+                        .substring(0, 8)
+                        .toUpperCase();
+
+        reservation.setReservationCode(
+                reservationCode
+        );
+
+
+        // Guardar en base de datos
             reservation = reservationRepository.save(reservation);
             // Mapear la entidad a DTO y retormar
             return ReservationMapper.entityToCreateReservationResponse(reservation);
 
 
         } catch (DataIntegrityViolationException e) {
-            throw new Exception("La cancha ya está reservada en ese horario");
+            throw new ConflictException("La cancha ya está reservada en ese horario");
         }
     }
 
@@ -106,30 +109,44 @@ public class ReservationServiceImpl implements ReservationService {
             );
         }
 
+        //GET ALL PUBLIC
+        @Override
+        public List<GetPublicReservationResponse> getPublicReservations() {
+           List<Reservation> reservations = reservationRepository.findAll();
+           return ReservationMapper.entityToListGetPublicReservationResponse(
+                        reservations
+                );
+    }
+
         //  GET BY ID
         @Override
         public GetReservationResponse getReservationById(Integer id) {
 
             Reservation reservation = reservationRepository.findById(id)
                     .orElseThrow(() ->
-                            new RuntimeException("Reserva no encontrada con id: " + id));
+                            new ResourceNotFoundException("Reserva no encontrada con id: " + id));
             return ReservationMapper.entityToGetReservationResponse(reservation);
         }
 
 
-    // CANCEL (ESE VA CON EL STATUS)
+    // CANCEL
     @Override
-    public GetReservationResponse cancelReservation(Integer id) {
+    public GetReservationResponse cancelReservation(Integer id, CancelReservationRequest cancelReservationRequest) {
 
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Reserva no encontrada con id: " + id)
+                        new ResourceNotFoundException("Reserva no encontrada con id: " + id)
                 );
 
-        ReservationStatus cancelled = reservationStatusRepository.findById(2)
-                .orElseThrow(() ->
-                        new RuntimeException("Estado CANCELLED no encontrado")
-                );
+        // VALIDAR CÓDIGO
+
+        if (!reservation.getReservationCode().equals(cancelReservationRequest.getReservationCode())) {
+            throw new RuntimeException("Código incorrecto");}
+
+        ReservationStatus cancelled = reservationStatusRepository
+                        .findById(2)
+                        .orElseThrow(() -> new ResourceNotFoundException("Estado CANCELLED no encontrado"));
+
 
         reservation.setStatus(cancelled);
 
@@ -140,12 +157,12 @@ public class ReservationServiceImpl implements ReservationService {
 
     // UPDATE
     @Override
-    public UpdateReservationResponse updateReservation(Integer id, UpdateReservationRequest updateReservationRequest) throws Exception {
+    public UpdateReservationResponse updateReservationClient (Integer id, UpdateReservationClientRequest updateReservationClientRequest) throws Exception {
 
         try {
 
             // Validar request
-            if (Objects.isNull(updateReservationRequest)) {
+            if (Objects.isNull(updateReservationClientRequest)) {
                 throw new Exception("El objeto UpdateReservationRequest no puede ser nulo");
             }
 
@@ -155,34 +172,42 @@ public class ReservationServiceImpl implements ReservationService {
             }
 
             // Validar fechas
-            if (Objects.isNull(updateReservationRequest.getStartDatetime())) {
-                throw new Exception("La fecha inicial no puede ser nula");
+            if (updateReservationClientRequest.getStartDatetime().isAfter(updateReservationClientRequest.getEndDatetime())) {
+                throw new RuntimeException("La fecha inicial no puede ser mayor a la final");
             }
 
-            if (Objects.isNull(updateReservationRequest.getEndDatetime())) {
-                throw new Exception("La fecha final no puede ser nula");
-            }
 
             // Buscar reserva
-            Reservation reservation = reservationRepository.findById(id)
-                    .orElseThrow(() ->
-                            new Exception(
-                                    "No se ha encontrado la reserva con id " + id
-                            )
-                    );
+            Reservation reservation = reservationRepository.findById(id).orElseThrow(() ->
+                            new ResourceNotFoundException("No se ha encontrado la reserva con id " + id));
 
-            // Actualizar datos
+
+            // VALIDAR RESERVATION CODE
+            if (!reservation.getReservationCode().equals(updateReservationClientRequest.getReservationCode())) {
+                throw new RuntimeException("Código de reserva incorrecto");}
+
+            // Buscar cancha
+            Court court = courtRepository.findById(updateReservationClientRequest.getCourtId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Cancha no encontrada"));
+
+            // Actualizar cancha
+            reservation.setCourt(court);
+
+            // Actualizar fechas
             reservation.setStartDatetime(
-                    updateReservationRequest.getStartDatetime()
+                    updateReservationClientRequest.getStartDatetime()
             );
 
             reservation.setEndDatetime(
-                    updateReservationRequest.getEndDatetime()
+                    updateReservationClientRequest.getEndDatetime()
             );
 
+            //Actualizar notes
             reservation.setNotes(
-                    updateReservationRequest.getNotes()
+                    updateReservationClientRequest.getNotes()
             );
+
+            reservation.setCreatedBy("CLIENT");
 
             // Persistir cambios
             reservation = reservationRepository.save(reservation);
@@ -193,7 +218,76 @@ public class ReservationServiceImpl implements ReservationService {
             );
 
         } catch (DataIntegrityViolationException e) {
-            throw new Exception("La cancha ya está reservada en ese horario");
+            throw new ConflictException("La cancha ya está reservada en ese horario");
+        }
+    }
+
+    @Override
+    public UpdateReservationResponse updateReservationAdmin(Integer id, UpdateReservationAdminRequest updateReservationAdminRequest) throws Exception {
+
+        try {
+
+            // Validar request
+            if (Objects.isNull(updateReservationAdminRequest)) {
+                throw new Exception("El objeto UpdateReservationAdminRequest no puede ser nulo");
+            }
+
+            // Validar id
+            if (Objects.isNull(id) || id <= 0) {
+                throw new Exception("El id no puede ser nulo o menor igual a 0");
+            }
+
+            // Validar fechas
+            if (updateReservationAdminRequest.getStartDatetime().isAfter(updateReservationAdminRequest.getEndDatetime())) {
+                throw new RuntimeException("La fecha inicial no puede ser mayor a la final");
+            }
+
+
+            // Buscar reserva
+            Reservation reservation = reservationRepository.findById(id).orElseThrow(() ->
+                    new ResourceNotFoundException("No se ha encontrado la reserva con id " + id));
+
+            // Buscar cancha
+            Court court = courtRepository.findById(updateReservationAdminRequest.getCourtId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Cancha no encontrada"));
+
+            // Buscar status
+            ReservationStatus status = reservationStatusRepository.findById(updateReservationAdminRequest.getStatusId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Estado no encontrado"));
+
+            // Actualizar cancha
+            reservation.setCourt(court);
+
+            // Actualizar status
+            reservation.setStatus(status);
+
+            // Actualizar fechas
+            reservation.setStartDatetime(
+                    updateReservationAdminRequest.getStartDatetime()
+            );
+
+            reservation.setEndDatetime(
+                    updateReservationAdminRequest.getEndDatetime()
+            );
+
+            //Actualizar notes
+            reservation.setNotes(
+                    updateReservationAdminRequest.getNotes()
+            );
+
+
+            reservation.setCreatedBy("OWNER");
+
+            // Persistir cambios
+            reservation = reservationRepository.save(reservation);
+
+            // Retornar DTO Response
+            return ReservationMapper.entityToUpdateReservationResponse(
+                    reservation
+            );
+
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflictException("La cancha ya está reservada en ese horario");
         }
     }
 
@@ -204,7 +298,7 @@ public class ReservationServiceImpl implements ReservationService {
 
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Reserva no encontrada con id: " + id)
+                        new ResourceNotFoundException("Reserva no encontrada con id: " + id)
                 );
 
         reservationRepository.delete(reservation);

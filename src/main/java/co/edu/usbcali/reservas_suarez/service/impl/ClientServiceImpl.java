@@ -8,9 +8,11 @@ import co.edu.usbcali.reservas_suarez.mapper.ClientMapper;
 import co.edu.usbcali.reservas_suarez.model.Client;
 import co.edu.usbcali.reservas_suarez.repository.ClientRepository;
 import co.edu.usbcali.reservas_suarez.service.ClientService;
+import co.edu.usbcali.reservas_suarez.exception.ResourceNotFoundException;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -26,25 +28,12 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public GetClientResponse createClient(CreateClientRequest createClientRequest) throws Exception {
 
-         try {
-             //Validar cada campo
+        try {
+            //Validar cada campo
 
-             if (Objects.isNull(createClientRequest)) {
-                 throw new Exception("El objeto CreateClientRequest no puede ser nulo");
-             }
-             if (Objects.isNull(createClientRequest.getName()) || createClientRequest.getName().isBlank()) {
-                 throw new Exception("El nombre es requerido");
-             }
-             if (createClientRequest.getName().length() > 100) {
-                 throw new Exception("El nombre solo soporta hasta 100 caracteres ");
-             }
-
-             if (Objects.isNull(createClientRequest.getPhone()) || createClientRequest.getPhone().isBlank()) {
-                 throw new Exception("El telefono es requerido");
-             }
-             if (createClientRequest.getPhone().length() > 20) {
-                 throw new Exception("El numero solo soporta hasta 20 caracteres ");
-             }
+            if (Objects.isNull(createClientRequest)) {
+                throw new Exception("El objeto CreateClientRequest no puede ser nulo");
+            }
 
             //Converit desde el Request hacia la Entidad usando el Mapper
             Client client = ClientMapper.createClientRequestToEntity(createClientRequest);
@@ -54,8 +43,8 @@ public class ClientServiceImpl implements ClientService {
             //Retonar el Dto Response
             return ClientMapper.entityToGetClientResponse(client);
         } catch (Exception e) {
-             throw e;
-         }
+            throw e;
+        }
 
     }
 
@@ -66,12 +55,12 @@ public class ClientServiceImpl implements ClientService {
         return ClientMapper.entityToListGetClientResponse(clients);
     }
 
-     //GET BY ID
+    //GET BY ID
     @Override
     public GetClientResponse getClientById(Integer id) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Cliente no encontrado con id: " + id)
+                        new ResourceNotFoundException("Cliente no encontrado con id: " + id)
                 );
         return ClientMapper.entityToGetClientResponse(client);
     }
@@ -81,33 +70,32 @@ public class ClientServiceImpl implements ClientService {
     public UpdateClientResponse updateClient(Integer id, UpdateClientRequest updateClientRequest) throws Exception {
 
         try {
-        // Validar objeto request
-        if (Objects.isNull(updateClientRequest)) {
-            throw new Exception("El updateClientRequest no puede ser nulo");
-        }
-        // Buscar cliente
-        Client client = clientRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("No se ha encontrado el cliente con id " + id)
-                );
-        // Actualizar name
-        if (Objects.nonNull(updateClientRequest.getName()) && !updateClientRequest.getName().isBlank()) {
-            if (updateClientRequest.getName().length() > 100) {
-                throw new Exception("El nombre solo soporta hasta 100 caracteres");
+            // Validar que el id no venga nulo
+            if (Objects.isNull(id) || id <= 0) {
+                throw new Exception("El id no puede ser nulo, tampoco un número menor o igual a cero");
             }
-            client.setName(updateClientRequest.getName());
-        }
-        // Actualizar phone
-        if (Objects.nonNull(updateClientRequest.getPhone()) && !updateClientRequest.getPhone().isBlank()) {
-            if (updateClientRequest.getPhone().length() > 20) {
-                throw new Exception("El teléfono solo soporta hasta 20 caracteres");
+
+            // Validar objeto request
+            if (Objects.isNull(updateClientRequest)) {
+                throw new Exception("El updateClientRequest no puede ser nulo");
             }
-            client.setPhone(updateClientRequest.getPhone());
-        }
+            // Buscar cliente
+            Client client = clientRepository.findById(id)
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException("No se ha encontrado el cliente con id " + id)
+                    );
+            // Actualizar name
+            if (Objects.nonNull(updateClientRequest.getName())) {
+                client.setName(updateClientRequest.getName());
+            }
+            // Actualizar phone
+            if (Objects.nonNull(updateClientRequest.getPhone())) {
+                client.setPhone(updateClientRequest.getPhone());
+            }
 
-        client = clientRepository.save(client);
+            client = clientRepository.save(client);
 
-        return ClientMapper.entityToUpdateClientResponse(client);
+            return ClientMapper.entityToUpdateClientResponse(client);
         } catch (Exception e) {
             throw e;
         }
@@ -119,7 +107,7 @@ public class ClientServiceImpl implements ClientService {
 
         Client client = clientRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Cliente no encontrado con id: " + id)
+                        new ResourceNotFoundException("Cliente no encontrado con id: " + id)
                 );
 
         clientRepository.delete(client);

@@ -27,5 +27,6 @@ public class GetReservationResponse {
     private String notes;
 
     private LocalDateTime createdAt;
+    private String reservationCode;
 
 }

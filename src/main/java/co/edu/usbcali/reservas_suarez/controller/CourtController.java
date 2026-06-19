@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -22,10 +23,10 @@ public class CourtController {
 
     private final CourtService courtService;
 
-    @GetMapping("/ping")
-    public String ping (){
-        return "pong";
-    }
+    //@GetMapping("/ping")
+    //public String ping (){
+    //    return "pong";
+    //}
 
     @GetMapping("/all")
     public List<GetCourtResponse> getAllCourts() {
@@ -41,7 +42,7 @@ public class CourtController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<CreateCourtResponse> createCourt(@RequestBody CreateCourtRequest createCourtRequest) throws Exception {
+    public ResponseEntity<CreateCourtResponse> createCourt(@Valid @RequestBody CreateCourtRequest createCourtRequest) throws Exception {
         CreateCourtResponse courtCreated = courtService.createCourt(createCourtRequest);
         return new ResponseEntity<>(
                 courtCreated,
@@ -51,7 +52,7 @@ public class CourtController {
     @PutMapping("/update/{id}")
     public ResponseEntity<UpdateCourtResponse> updateCourt(
             @PathVariable Integer id,
-            @RequestBody UpdateCourtRequest updateCourtRequest)throws Exception{
+            @Valid @RequestBody UpdateCourtRequest updateCourtRequest)throws Exception{
 
         UpdateCourtResponse courtUpdated = courtService.updateCourt(id, updateCourtRequest);
         return new ResponseEntity<>(
